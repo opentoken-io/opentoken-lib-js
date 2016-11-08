@@ -1,0 +1,48 @@
+{
+    "name": "opentoken-lib-js",
+    "version": "0.0.1",
+    "description": "Used to interact with the OpenToken API.",
+    "main": "lib/opentokenlib.js",
+    "scripts": {},
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/opentoken-io/opentoken-lib-js.git"
+    },
+    "keywords": [
+        "tokenize",
+        "opentoken",
+        "library",
+        "lib"
+    ],
+    "author": "OpenToken.io Team",
+    "contributors": [
+        {
+            "name": "Kyle Long",
+            "email": "uilwen@gmail.com",
+            "url": "https://github.com/kyle-long"
+        },
+        {
+            "name": "Andy Gertjejansen",
+            "url": "https://github.com/quantumew"
+        }
+    ],
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/opentoken-io/opentoken-lib-js/issues"
+    },
+    "homepage": "https://github.com/opentoken-io/opentoken-lib-js#readme",
+    "devDependencies": {
+        "codecov": "^1.0.1",
+        "eslint": "^3.6.0",
+        "istanbul": "^0.4.5",
+        "jasmine-node": "^1.14.5",
+        "jasmine-test-helpers": "^1.1.0",
+        "mock-require": "^1.3.0"
+    },
+    "dependencies": {
+        "bluebird": "^3.4.6",
+        "dizzy": "^2.0.5",
+        "parse-link-header": "opentoken-io/parse-link-header#multiple-links",
+        "request": "^2.75.0"
+    }
+}
