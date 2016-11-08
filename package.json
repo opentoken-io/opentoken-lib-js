@@ -2,7 +2,7 @@
     "name": "opentoken-lib-js",
     "version": "0.0.1",
     "description": "Used to interact with the OpenToken API.",
-    "main": "lib/opentokenlib.js",
+    "main": "lib/opentoken-lib.js",
     "scripts": {},
     "repository": {
         "type": "git",
