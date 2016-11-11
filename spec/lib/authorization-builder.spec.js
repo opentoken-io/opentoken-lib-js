@@ -13,7 +13,7 @@ describe("AuthoriztionBuilder", () => {
     });
 
     describe(".createHeader", () => {
-        var body, code, expectedAuth, requestOptions, secret;
+        var body, code, expectedAuth, requestOptions, secret, signature;
 
         /**
          * @param {string} content
@@ -33,6 +33,7 @@ describe("AuthoriztionBuilder", () => {
             code = "code";
             secret = "secret";
             body = "hello world";
+            signature = "49c0edb8558bee14649dc77da6ab934a23477261549dd377f19206f85a56785b";
             requestOptions = {
                 headers: {
                     "content-type": "text/plain",
@@ -42,7 +43,7 @@ describe("AuthoriztionBuilder", () => {
                 method: "POST",
                 url: "https://api.opentoken.io/account/abc123/token?public"
             };
-            expectedAuth = "OT1-HMAC-SHA256-HEX; access-code=code; signed-headers=content-type x-opentoken-date host; signature=49c0edb8558bee14649dc77da6ab934a23477261549dd377f19206f85a56785b";
+            expectedAuth = `OT1-HMAC-SHA256-HEX; access-code=code; signed-headers=content-type x-opentoken-date host; signature=${signature}`;
         });
         it("will use a body that is a string", () => {
             var builder;
@@ -81,7 +82,7 @@ describe("AuthoriztionBuilder", () => {
             // is OK. So long as the ones were lowercase when used to build
             // the signature we should be fine. Tested this with the actual
             // API and it appears to work no problem.
-            expectedAuth = "OT1-HMAC-SHA256-HEX; access-code=code; signed-headers=CoNtent-tYpe x-opEntOken-datE host; signature=49c0edb8558bee14649dc77da6ab934a23477261549dd377f19206f85a56785b";
+            expectedAuth = `OT1-HMAC-SHA256-HEX; access-code=code; signed-headers=CoNtent-tYpe x-opEntOken-datE host; signature=${signature}`;
 
             return builder.createHeader().then((auth) => {
                 expect(auth).toEqual(expectedAuth);
