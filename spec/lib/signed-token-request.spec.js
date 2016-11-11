@@ -1,7 +1,7 @@
 "use strict";
 
 describe("SignedTokenRequest", () => {
-    var AuthorizationBuilder, bluebird, contentHasher, dateMock, fsAsyncMock, loggerMock, requestAsyncMock, requestHandler, requestMock, requestModuleMock, responseMock, SignedTokenRequest, signer, Uri;
+    var AuthorizationBuilder, bluebird, contentHasher, dateMock, fsMock, loggerMock, requestAsyncMock, requestHandler, requestMock, requestModuleMock, responseMock, SignedTokenRequest, signer, tokenDownloader, Uri;
 
     // Just some test data that is constant.
     const account = {
@@ -25,9 +25,10 @@ describe("SignedTokenRequest", () => {
         spyOn(signer, "sign").andCallThrough();
         requestAsyncMock = jasmine.createSpy("requestAsync");
         bluebird = require("bluebird");
-        requestHandler = require("../../lib/request-handler")(bluebird, dateMock, host, loggerMock);
-        fsAsyncMock = jasmine.createSpyObj("fs", ["createWriteStream"]);
-        SignedTokenRequest = require("../../lib/signed-token-request")(bluebird, fsAsyncMock, host, loggerMock, signer, requestModuleMock, requestAsyncMock, requestHandler, Uri);
+        requestHandler = require("../../lib/request-handler")(bluebird, dateMock, host, loggerMock, Uri);
+        fsMock = jasmine.createSpyObj("fs", ["createWriteStream"]);
+        tokenDownloader = require("../../lib/token-downloader")(bluebird, fsMock, requestModuleMock, requestAsyncMock, requestHandler);
+        SignedTokenRequest = require("../../lib/signed-token-request")(bluebird, fsMock, host, loggerMock, signer, requestModuleMock, requestAsyncMock, requestHandler, tokenDownloader, Uri);
     });
 
 
@@ -111,7 +112,7 @@ describe("SignedTokenRequest", () => {
             StreamReadable = require("stream").Readable;
             mockedStream = new StreamReadable();
             responseMock.pipe.andReturn(mockedStream);
-            fsAsyncMock.createWriteStream.andReturn({
+            fsMock.createWriteStream.andReturn({
                 path: file
             });
             st = new SignedTokenRequest(account.id, true, account.code, account.secret);
@@ -125,6 +126,10 @@ describe("SignedTokenRequest", () => {
             mockedStream.emit("finish");
 
             return promise;
+        });
+    });
+    describe(".uploadFromFile", () => {
+        it("successfully uploads from a file", () => {
         });
     });
 });
