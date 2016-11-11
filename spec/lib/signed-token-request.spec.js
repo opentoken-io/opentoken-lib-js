@@ -1,7 +1,7 @@
 "use strict";
 
 describe("SignedTokenRequest", () => {
-    var AuthorizationBuilder, bluebird, contentHasher, dateMock, fsAsyncMock, loggerMock, requestAsyncMock, requestHandler, requestMock, SignedTokenRequest, signer, Uri;
+    var AuthorizationBuilder, bluebird, contentHasher, dateMock, fsAsyncMock, loggerMock, requestAsyncMock, requestHandler, requestMock, requestModuleMock, responseMock, SignedTokenRequest, signer, Uri;
 
     // Just some test data that is constant.
     const account = {
@@ -12,55 +12,119 @@ describe("SignedTokenRequest", () => {
         host = "api.opentoken.io";
 
     beforeEach(() => {
+        requestMock = require("../mock/request-mock")();
+        responseMock = require("../mock/response-mock")();
+        requestModuleMock = jasmine.createSpy("request").andReturn(requestMock);
         dateMock = jasmine.createSpyObj("date", ["now"]);
         dateMock.now.andReturn("NOW");
         Uri = require("urijs");
-        contentHasher = require("../../lib/content-hasher")(require("hasha"), require("stream-to-promise"), require("stream-concat"), require("stream").Readable);
+        contentHasher = require("../../lib/content-hasher")(require("crypto"), require("stream-to-promise"), require("stream-concat"), require("stream").Readable);
         loggerMock = require("../mock/logger-mock")();
         AuthorizationBuilder = require("../../lib/authorization-builder")(contentHasher, loggerMock, Uri);
         signer = require("../../lib/signer")(AuthorizationBuilder);
         spyOn(signer, "sign").andCallThrough();
         requestAsyncMock = jasmine.createSpy("requestAsync");
-        requestMock = jasmine.createSpy("request");
         bluebird = require("bluebird");
         requestHandler = require("../../lib/request-handler")(bluebird, dateMock, host, loggerMock);
-        SignedTokenRequest = require("../../lib/signed-token-request")(bluebird, fsAsyncMock, host, loggerMock, signer, requestMock, requestAsyncMock, requestHandler, Uri);
+        fsAsyncMock = jasmine.createSpyObj("fs", ["createWriteStream"]);
+        SignedTokenRequest = require("../../lib/signed-token-request")(bluebird, fsAsyncMock, host, loggerMock, signer, requestModuleMock, requestAsyncMock, requestHandler, Uri);
     });
+
+
+    /**
+     * Assert Authrization header.
+     *
+     * @param {string} authHeader
+     */
+    function assertAuthHeader(authHeader) {
+        var authList;
+
+        authList = authHeader.split(";");
+        expect(authList[0]).toEqual("OT1-HMAC-SHA256-HEX");
+        expect(authList[1].trim()).toEqual(`access-code=${account.code}`);
+        expect(authList[2].trim()).toEqual("signed-headers=content-type x-opentoken-date host");
+        expect(authList[3].trim()).toMatch("signature=[a-z0-9].*");
+    }
     describe(".download", () => {
         it("downloads stuff", () => {
-            var actualRequestOpts, authList, requestOptions, responseMock, st, token;
+            var actualRequestOpts, method, resp, st, token, url;
 
             token = "token";
-            responseMock = {
+            resp = {
+                body: "test",
                 statusCode: 200
             };
-            requestOptions = {
-                headers: {
-                    "content-type": "text/plain",
-                    "x-opentoken-date": "NOW",
-                    host
-                },
-                method: "GET",
-                url: `https://${host}/account/${account.id}/token/${token}`
-            };
+            method = "GET";
+            url = `https://${host}/account/${account.id}/token/${token}`;
             st = new SignedTokenRequest(account.id, false, account.code, account.secret);
-            requestAsyncMock.andReturn(bluebird.resolve(responseMock));
+            requestAsyncMock.andReturn(bluebird.resolve(resp));
 
             return st.download(token).then((body) => {
-                expect(body).toEqual(responseMock.body);
+                expect(body).toEqual(resp.body);
                 expect(requestAsyncMock).toHaveBeenCalled();
                 expect(signer.sign).toHaveBeenCalled();
                 actualRequestOpts = requestAsyncMock.argsForCall[0][0];
-                expect(actualRequestOpts.method).toEqual(requestOptions.method);
-                expect(actualRequestOpts.url).toEqual(requestOptions.url);
+                expect(actualRequestOpts.method).toEqual(method);
+                expect(actualRequestOpts.url).toEqual(url);
 
                 // Asserting parts of the Authorization header.
-                authList = actualRequestOpts.headers.Authorization.split(";");
-                expect(authList[0]).toEqual("OT1-HMAC-SHA256-HEX");
-                expect(authList[1].trim()).toEqual(`access-code=${account.code}`);
-                expect(authList[2].trim()).toEqual("signed-headers=content-type x-opentoken-date host");
-                expect(authList[3].trim()).toMatch("signature=[a-z0-9].*");
+                assertAuthHeader(actualRequestOpts.headers.Authorization);
             });
+        });
+    });
+    describe(".upload", () => {
+        it("successfuly uploads", () => {
+            var actualRequestOpts, contents, resp, st, token, url;
+
+            token = "token";
+            url = `https://${host}/account/${account.id}/token`;
+            st = new SignedTokenRequest(account.id, false, account.code, account.secret);
+            contents = "body";
+            resp = {
+                body: "test",
+                statusCode: 200,
+                headers: {
+                    location: `${url}/${token}`
+                }
+            };
+            requestAsyncMock.andReturn(bluebird.resolve(resp));
+
+            return st.upload(contents).then((actualToken) => {
+                expect(actualToken).toEqual(token);
+                expect(signer.sign).toHaveBeenCalled();
+                actualRequestOpts = requestAsyncMock.argsForCall[0][0];
+                expect(actualRequestOpts.method).toEqual("POST");
+                expect(actualRequestOpts.url).toEqual(url);
+
+                // Asserting parts of the Authorization header.
+                assertAuthHeader(actualRequestOpts.headers.Authorization);
+            });
+        });
+    });
+    describe(".downloadToFile", () => {
+        it("successfuly downloads to a \"file\" from public endpoint", () => {
+            var file, mockedStream, promise, st, StreamReadable, token;
+
+            token = "token";
+            file = "fakeFile";
+
+            StreamReadable = require("stream").Readable;
+            mockedStream = new StreamReadable();
+            responseMock.pipe.andReturn(mockedStream);
+            fsAsyncMock.createWriteStream.andReturn({
+                path: file
+            });
+            st = new SignedTokenRequest(account.id, true, account.code, account.secret);
+
+            promise = st.downloadToFile(token, file).then((actualFile) => {
+                expect(actualFile).toEqual(file);
+                expect(signer.sign).toHaveBeenCalled();
+            });
+
+            requestMock.emit("response", responseMock);
+            mockedStream.emit("finish");
+
+            return promise;
         });
     });
 });
