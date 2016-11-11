@@ -1,7 +1,7 @@
 "use strict";
 
 describe("SignedTokenRequest", () => {
-    var AuthorizationBuilder, bluebird, contentHasher, dateMock, fsMock, loggerMock, requestAsyncMock, requestHandler, requestMock, requestModuleMock, responseMock, SignedTokenRequest, signer, tokenDownloader, Uri;
+    var bluebird, container, dateServiceMock, fsMock, requestAsyncMock, requestMock, responseMock, SignedTokenRequest, signer;
 
     // Just some test data that is constant.
     const account = {
@@ -12,23 +12,22 @@ describe("SignedTokenRequest", () => {
         host = "api.opentoken.io";
 
     beforeEach(() => {
+        container = require("../../lib/container")(host, "info");
+        bluebird = container.resolve("bluebird");
         requestMock = require("../mock/request-mock")();
         responseMock = require("../mock/response-mock")();
-        requestModuleMock = jasmine.createSpy("request").andReturn(requestMock);
-        dateMock = jasmine.createSpyObj("date", ["now"]);
-        dateMock.now.andReturn("NOW");
-        Uri = require("urijs");
-        contentHasher = require("../../lib/content-hasher")(require("crypto"), require("stream-to-promise"), require("stream-concat"), require("stream").Readable);
-        loggerMock = require("../mock/logger-mock")();
-        AuthorizationBuilder = require("../../lib/authorization-builder")(contentHasher, loggerMock, Uri);
-        signer = require("../../lib/signer")(AuthorizationBuilder);
-        spyOn(signer, "sign").andCallThrough();
-        requestAsyncMock = jasmine.createSpy("requestAsync");
-        bluebird = require("bluebird");
-        requestHandler = require("../../lib/request-handler")(bluebird, dateMock, host, loggerMock, Uri);
+        container.register("request", jasmine.createSpy("request").andReturn(requestMock));
+        dateServiceMock = jasmine.createSpyObj("date", ["now"]);
+        dateServiceMock.now.andReturn("NOW");
+        container.register("dateService", dateServiceMock);
+        container.register("logger", require("../mock/logger-mock")());
         fsMock = jasmine.createSpyObj("fs", ["createWriteStream"]);
-        tokenDownloader = require("../../lib/token-downloader")(bluebird, fsMock, requestModuleMock, requestAsyncMock, requestHandler);
-        SignedTokenRequest = require("../../lib/signed-token-request")(bluebird, fsMock, host, loggerMock, signer, requestModuleMock, requestAsyncMock, requestHandler, tokenDownloader, Uri);
+        container.register("fs", fsMock);
+        requestAsyncMock = jasmine.createSpy("requestAsync");
+        container.register("requestAsync", requestAsyncMock);
+        signer = container.resolve("signer");
+        spyOn(signer, "sign").andCallThrough();
+        SignedTokenRequest = container.resolve("SignedTokenRequest");
     });
 
 
@@ -130,6 +129,23 @@ describe("SignedTokenRequest", () => {
     });
     describe(".uploadFromFile", () => {
         it("successfully uploads from a file", () => {
+            var file, mockedStream, promise, st, StreamReadable, token;
+
+            file = "file";
+            StreamReadable = require("stream").Readable;
+            mockedStream = new StreamReadable();
+            mockedStream.push("CONTENT");
+            fsMock.createReadStream = jasmine.createSpy("fs.createReadStream").andReturn(mockedStream);
+            st = new SignedTokenRequest(account.id, true, account.code, account.secret);
+
+            promise = st.uploadFromFile(file).then((actualToken) => {
+                expect(actualToken).toEqual(token);
+            });
+
+            requestMock.emit("response", responseMock);
+            mockedStream.emit("finish");
+
+            return promise;
         });
     });
 });
