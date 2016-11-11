@@ -1,13 +1,15 @@
 "use strict";
 
 describe("AuthoriztionBuilder", () => {
-    var AuthorizationBuilder, container, dateMock, StreamReadable;
+    var AuthorizationBuilder, container, dateMock, loggerMock, StreamReadable;
 
     beforeEach(() => {
+        loggerMock = require("../mock/logger-mock")();
         dateMock = jasmine.createSpyObj("date", ["now"]);
         dateMock.now.andReturn("NOW");
         container = require("../../lib/container")("api.opentoken.io");
         container.register("dateService", dateMock);
+        container.register("logger", loggerMock);
         AuthorizationBuilder = container.resolve("AuthorizationBuilder");
         StreamReadable = container.resolve("StreamReadable");
     });
@@ -86,6 +88,16 @@ describe("AuthoriztionBuilder", () => {
 
             return builder.createHeader().then((auth) => {
                 expect(auth).toEqual(expectedAuth);
+            });
+        });
+
+        it("will debug log the result", () => {
+            var builder;
+
+            builder = new AuthorizationBuilder(code, secret, requestOptions, body);
+
+            return builder.createHeader().then((auth) => {
+                expect(loggerMock.debug).toHaveBeenCalledWith("Authorization header value:", auth);
             });
         });
     });
