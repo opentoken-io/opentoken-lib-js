@@ -127,25 +127,4 @@ describe("SignedTokenRequest", () => {
             return promise;
         });
     });
-    describe(".uploadFromFile", () => {
-        it("successfully uploads from a file", () => {
-            var file, mockedStream, promise, st, StreamReadable, token;
-
-            file = "file";
-            StreamReadable = require("stream").Readable;
-            mockedStream = new StreamReadable();
-            mockedStream.push("CONTENT");
-            fsMock.createReadStream = jasmine.createSpy("fs.createReadStream").andReturn(mockedStream);
-            st = new SignedTokenRequest(account.id, true, account.code, account.secret);
-
-            promise = st.uploadFromFile(file).then((actualToken) => {
-                expect(actualToken).toEqual(token);
-            });
-
-            requestMock.emit("response", responseMock);
-            mockedStream.emit("finish");
-
-            return promise;
-        });
-    });
 });
