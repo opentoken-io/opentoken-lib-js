@@ -1,0 +1,43 @@
+"use strict";
+
+describe("opentokenLib", () => {
+    var opentokenLib, req, signed;
+
+    // Just some test data that is constant.
+    const account = {
+            code: "code",
+            secret: "secret",
+            id: "accountId"
+        },
+        host = "api.opentoken.io";
+
+    beforeEach(() => {
+        opentokenLib = require("../../lib/opentoken-lib")(host, "info");
+        signed = opentokenLib.createSignedTokenRequests(account.id, account.code, account.secret);
+        req = opentokenLib.createTokenRequest(account.id);
+    });
+    describe(".createSignedTokenRequests", () => {
+        describe(".public", () => {
+            it("is a SignedTokenRequest with the proper properties set.", () => {
+                expect(signed.public).toEqual(jasmine.any(Object));
+                expect(signed.public.accountId).toBe(account.id);
+                expect(signed.public.code).toBe(account.code);
+                expect(signed.public.secret).toBe(account.secret);
+            });
+        });
+        describe(".private", () => {
+            it("is a SignedTokenRequest with the proper properties set.", () => {
+                expect(signed.private).toEqual(jasmine.any(Object));
+                expect(signed.private.accountId).toBe(account.id);
+                expect(signed.private.code).toBe(account.code);
+                expect(signed.private.secret).toBe(account.secret);
+            });
+        });
+    });
+    describe(".createTokenRequest", () => {
+        it(".public", () => {
+            expect(req).toEqual(jasmine.any(Object));
+            expect(req.accountId).toBe(account.id);
+        });
+    });
+});

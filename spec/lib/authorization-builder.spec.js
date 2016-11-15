@@ -74,11 +74,13 @@ describe("AuthoriztionBuilder", () => {
             requestOptions.headers = {
                 "CoNtent-tYpe": "text/plain",
                 "x-opEntOken-datE": "NOW",
+
                 // host is a special case and is lowercased specifically.
                 host: "Api.OPENtoken.io"
             };
 
             builder = new AuthorizationBuilder(code, secret, requestOptions, body);
+
             // Important to note: The fact that the "signed-headers" are not
             // cased the same as when they were used to build the signature
             // is OK. So long as the ones were lowercase when used to build
