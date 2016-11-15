@@ -13,8 +13,9 @@ describe("TokenRequest", () => {
         fsMock = jasmine.createSpyObj("fs", ["createWriteStream"]);
         container.register("fs", fsMock);
         requestMock = require("../mock/request-mock")();
+        requestMock.get.andReturn(requestMock);
         responseMock = require("../mock/response-mock")();
-        container.register("request", jasmine.createSpy("request").andReturn(requestMock));
+        container.register("request", requestMock);
         requestAsyncMock = jasmine.createSpy("requestAsync");
         container.register("requestAsync", requestAsyncMock);
         container.register("logger", require("../mock/logger-mock")());

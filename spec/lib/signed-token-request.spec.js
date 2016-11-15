@@ -16,8 +16,10 @@ describe("SignedTokenRequest", () => {
         container = require("../../lib/container")(host, "info");
         bluebird = container.resolve("bluebird");
         requestMock = require("../mock/request-mock")();
+        requestMock.get.andReturn(requestMock);
+        requestMock.post.andReturn(requestMock);
         responseMock = require("../mock/response-mock")();
-        container.register("request", jasmine.createSpy("request").andReturn(requestMock));
+        container.register("request", requestMock);
         dateServiceMock = jasmine.createSpyObj("date", ["now"]);
         dateServiceMock.now.andReturn("NOW");
         container.register("dateService", dateServiceMock);
@@ -143,12 +145,10 @@ describe("SignedTokenRequest", () => {
                 path: file
             });
             url = `${url}/${token}`;
-
             promise = publicSigned.downloadToFile(token, file).then((actualFile) => {
                 expect(actualFile).toEqual(file);
                 expect(signer.sign).toHaveBeenCalled();
             });
-
             requestMock.emit("response", responseMock);
             stream.emit("finish");
 

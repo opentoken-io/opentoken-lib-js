@@ -9,11 +9,13 @@ module.exports = () => {
 
     request = jasmine.createSpyObj("request", [
         "contentType",
+        "get",
         "getContentLength",
         "getPath",
         "getQuery",
         "href",
-        "isChunked"
+        "isChunked",
+        "post"
     ]);
     request.body = null;
     request.contentType.andReturn(null);
