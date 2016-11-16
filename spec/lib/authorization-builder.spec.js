@@ -13,9 +13,9 @@ describe("AuthoriztionBuilder", () => {
         AuthorizationBuilder = container.resolve("AuthorizationBuilder");
         StreamReadable = container.resolve("StreamReadable");
     });
-
     describe(".createHeader", () => {
         var body, code, expectedAuth, requestOptions, secret, signature;
+
 
         /**
          * @param {string} content
@@ -30,7 +30,6 @@ describe("AuthoriztionBuilder", () => {
 
             return stream;
         }
-
         beforeEach(() => {
             code = "code";
             secret = "secret";
@@ -56,7 +55,6 @@ describe("AuthoriztionBuilder", () => {
                 expect(auth).toEqual(expectedAuth);
             });
         });
-
         it("will use a body that is a readable stream", () => {
             var builder;
 
@@ -67,7 +65,6 @@ describe("AuthoriztionBuilder", () => {
                 expect(auth).toEqual(expectedAuth);
             });
         });
-
         it("will standardize header keys", () => {
             var builder;
 
@@ -92,7 +89,6 @@ describe("AuthoriztionBuilder", () => {
                 expect(auth).toEqual(expectedAuth);
             });
         });
-
         it("will debug log the result", () => {
             var builder;
 

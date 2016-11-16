@@ -1,7 +1,7 @@
 "use strict";
 
 describe("SignedTokenRequest", () => {
-    var bluebird, container, dateServiceMock, fsMock, privateSigned, publicSigned, requestAsyncMock, requestMock, responseMock, SignedTokenRequest, signer, StreamReadable, url;
+    var bluebird, container, fsMock, privateSigned, publicSigned, requestAsyncMock, requestMock, responseMock, SignedTokenRequest, signer, StreamReadable, url;
 
     // Just some test data that is constant.
     const account = {
@@ -18,11 +18,8 @@ describe("SignedTokenRequest", () => {
         requestMock = require("../mock/request-mock")();
         requestMock.get.andReturn(requestMock);
         requestMock.post.andReturn(requestMock);
-        responseMock = require("../mock/response-mock")();
         container.register("request", requestMock);
-        dateServiceMock = jasmine.createSpyObj("date", ["now"]);
-        dateServiceMock.now.andReturn("NOW");
-        container.register("dateService", dateServiceMock);
+        responseMock = require("../mock/response-mock")();
         container.register("logger", require("../mock/logger-mock")());
         fsMock = jasmine.createSpyObj("fs", ["createWriteStream"]);
         container.register("fs", fsMock);
@@ -91,20 +88,49 @@ describe("SignedTokenRequest", () => {
                 assertAuthHeader(actualRequestOpts.headers.Authorization);
             });
         });
-        it("fails to download due to OpenToken error response", () => {
+        it("fails to download due to generic error response", () => {
             var resp;
 
             resp = {
-                body: {
-                    message: "Failed to verify signature",
-                    code: "Abcdefg"
-                },
                 statusCode: 401
             };
             requestAsyncMock.andReturn(bluebird.resolve(resp));
 
             return privateSigned.download(token).then(jasmine.fail, (err) => {
-                expect(err.message).toEqual(`Error occurred: ${resp.body.message}, HTTP status code: ${resp.statusCode}.`);
+                expect(err.message).toEqual(`Error occurred: unauthorized, HTTP status code: ${resp.statusCode}.`);
+                expect(requestAsyncMock).toHaveBeenCalled();
+                expect(signer.sign).toHaveBeenCalled();
+            });
+        });
+        it("fails to download due to unknown error response", () => {
+            var resp;
+
+            resp = {
+                statusCode: 491
+            };
+            requestAsyncMock.andReturn(bluebird.resolve(resp));
+
+            return privateSigned.download(token).then(jasmine.fail, (err) => {
+                expect(err.message).toEqual(`Error occurred: unknown, HTTP status code: ${resp.statusCode}.`);
+                expect(requestAsyncMock).toHaveBeenCalled();
+                expect(signer.sign).toHaveBeenCalled();
+            });
+        });
+        it("fails to download due to OpenToken error response", () => {
+            var body, resp;
+
+            body = {
+                message: "Failed to verify signature",
+                code: "Abcdefg"
+            };
+            resp = {
+                body: JSON.stringify(body),
+                statusCode: 401
+            };
+            requestAsyncMock.andReturn(bluebird.resolve(resp));
+
+            return privateSigned.download(token).then(jasmine.fail, (err) => {
+                expect(err.message).toEqual(`Error occurred: Failed to verify signature, HTTP status code: ${resp.statusCode}.`);
                 expect(requestAsyncMock).toHaveBeenCalled();
                 expect(signer.sign).toHaveBeenCalled();
             });
@@ -117,19 +143,19 @@ describe("SignedTokenRequest", () => {
             contents = "body";
             resp = {
                 body: "test",
-                statusCode: 200,
+                statusCode: 201,
                 headers: {
                     location: `${url}/${token}`
                 }
             };
             requestAsyncMock.andReturn(bluebird.resolve(resp));
 
-            return privateSigned.upload(contents).then((actualToken) => {
+            return publicSigned.upload(contents).then((actualToken) => {
                 expect(actualToken).toEqual(token);
                 expect(signer.sign).toHaveBeenCalled();
                 actualRequestOpts = requestAsyncMock.argsForCall[0][0];
                 expect(actualRequestOpts.method).toEqual("POST");
-                expect(actualRequestOpts.url).toEqual(url);
+                expect(actualRequestOpts.url).toEqual(`${url}?public=true`);
                 assertAuthHeader(actualRequestOpts.headers.Authorization);
             });
         });
@@ -145,12 +171,68 @@ describe("SignedTokenRequest", () => {
                 path: file
             });
             url = `${url}/${token}`;
-            promise = publicSigned.downloadToFile(token, file).then((actualFile) => {
+            promise = privateSigned.downloadToFile(token, file).then((actualFile) => {
                 expect(actualFile).toEqual(file);
                 expect(signer.sign).toHaveBeenCalled();
             });
-            requestMock.emit("response", responseMock);
-            stream.emit("finish");
+
+            // This is horrible but I could not find a better solution to it.
+            // Have to wait for the signer.sign promise to resolve before emitting
+            // the appropriate events to complete the response.
+            setTimeout(() => {
+                requestMock.emit("response", responseMock);
+                stream.emit("finish");
+            }, 250);
+
+            return promise;
+        });
+    });
+    describe(".uploadFromFile", () => {
+        var uploadResp;
+
+        uploadResp = {
+            body: "test",
+            statusCode: 201,
+            headers: {
+                location: `${url}/${token}`
+            }
+        };
+        it("successfully uploads from a file", () => {
+            var promise, stream;
+
+            stream = createStream("Test");
+            fsMock.createReadStream = jasmine.createSpy("fs.createReadStream").andReturn(stream);
+            requestMock.on = (event, callback) => {
+                callback(uploadResp);
+            };
+            promise = privateSigned.uploadFromFile("file.json").then((actualToken) => {
+                expect(actualToken).toEqual(token);
+                expect(signer.sign).toHaveBeenCalled();
+            });
+
+            // Basically the same thing as above. Have to have this event fired after
+            // the signer has signed. I found no other way to do this then setTimeout.
+            setTimeout(() => {
+                stream.emit("end");
+            }, 250);
+
+            return promise;
+        });
+        it("successfully uploads from a file, stream preloaded", () => {
+            var promise, stream;
+
+            stream = createStream("Test");
+            requestMock.on = (event, callback) => {
+                callback(uploadResp);
+            };
+            promise = privateSigned.uploadFromFile(stream).then((actualToken) => {
+                expect(actualToken).toEqual(token);
+                expect(signer.sign).toHaveBeenCalled();
+            });
+
+            setTimeout(() => {
+                stream.emit("end");
+            }, 250);
 
             return promise;
         });
