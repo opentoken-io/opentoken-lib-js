@@ -33,10 +33,10 @@ The library exposes two functions `createSignedTokenRequests` and `createTokenRe
 SignedTokenRequest
 ------------------
 
-`createSignedTokenRequests` returns an object containing two properties `public` and `private`. Each of these properties are instances of `SignedTokenRequest`, meant to be used with public and private endpoints. It exposes four functions `download`, `downloadToFile`, `upload`, and `uploadToFile`.
+`createSignedTokenRequests` returns an object containing two properties `public` and `private`. Each of these properties are instances of `SignedTokenRequest`, meant to be used with public and private endpoints. It exposes four functions `download(token)`, `downloadToFile(token, filePath)`, `upload(content)`, and `uploadToFile(filePath)`.
 
 
 TokenRequest
 ------------
 
-Provides an interface for unsigned token requests. `createTokenRequest` returns an instance of `TokenRequest`. It exposes two functions `download` and `downloadToFile`.
+Provides an interface for unsigned token requests. `createTokenRequest` returns an instance of `TokenRequest`. It exposes two functions `download(token)` and `downloadToFile(token, filePath)`.

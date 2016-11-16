@@ -1,7 +1,7 @@
 "use strict";
 
 describe("SignedTokenRequest", () => {
-    var bluebird, container, fsMock, privateSigned, publicSigned, requestAsyncMock, requestMock, responseMock, SignedTokenRequest, signer, StreamReadable, url;
+    var bluebird, container, fsMock, privateSigned, publicSigned, requestAsyncMock, requestHandler, requestMock, responseMock, SignedTokenRequest, signer, StreamReadable, url;
 
     // Just some test data that is constant.
     const account = {
@@ -27,6 +27,10 @@ describe("SignedTokenRequest", () => {
         container.register("requestAsync", requestAsyncMock);
         signer = container.resolve("signer");
         spyOn(signer, "sign").andCallThrough();
+        requestHandler = container.resolve("requestHandler");
+        spyOn(requestHandler, "createUrl").andCallThrough();
+        spyOn(requestHandler, "checkResponse").andCallThrough();
+        spyOn(requestHandler, "buildRequestOptions").andCallThrough();
         SignedTokenRequest = container.resolve("SignedTokenRequest");
         StreamReadable = container.resolve("StreamReadable");
         url = `https://${host}/account/${account.id}/token`;
@@ -79,6 +83,8 @@ describe("SignedTokenRequest", () => {
             requestAsyncMock.andReturn(bluebird.resolve(resp));
 
             return privateSigned.download(token).then((body) => {
+                expect(requestHandler.createUrl).toHaveBeenCalledWith(account.id, false, token);
+                expect(requestHandler.buildRequestOptions).toHaveBeenCalledWith(url, method);
                 expect(body).toEqual(resp.body);
                 expect(requestAsyncMock).toHaveBeenCalled();
                 expect(signer.sign).toHaveBeenCalled();
@@ -138,23 +144,26 @@ describe("SignedTokenRequest", () => {
     });
     describe(".upload", () => {
         it("successfuly uploads", () => {
-            var actualRequestOpts, contents, resp;
+            var actualRequestOpts, contents, method, resp;
 
+            method = "POST";
             contents = "body";
             resp = {
                 body: "test",
                 statusCode: 201,
                 headers: {
-                    location: `${url}/${token}`
+                    location: `${url}/${token}?public=true`
                 }
             };
             requestAsyncMock.andReturn(bluebird.resolve(resp));
 
             return publicSigned.upload(contents).then((actualToken) => {
+                expect(requestHandler.createUrl).toHaveBeenCalledWith(account.id, true);
+                expect(requestHandler.buildRequestOptions).toHaveBeenCalledWith(`${url}?public=true`, method);
                 expect(actualToken).toEqual(token);
                 expect(signer.sign).toHaveBeenCalled();
                 actualRequestOpts = requestAsyncMock.argsForCall[0][0];
-                expect(actualRequestOpts.method).toEqual("POST");
+                expect(actualRequestOpts.method).toEqual(method);
                 expect(actualRequestOpts.url).toEqual(`${url}?public=true`);
                 assertAuthHeader(actualRequestOpts.headers.Authorization);
             });
@@ -172,6 +181,8 @@ describe("SignedTokenRequest", () => {
             });
             url = `${url}/${token}`;
             promise = privateSigned.downloadToFile(token, file).then((actualFile) => {
+                expect(requestHandler.createUrl).toHaveBeenCalledWith(account.id, false, token);
+                expect(requestHandler.buildRequestOptions).toHaveBeenCalledWith(url, "GET");
                 expect(actualFile).toEqual(file);
                 expect(signer.sign).toHaveBeenCalled();
             });
@@ -206,6 +217,8 @@ describe("SignedTokenRequest", () => {
                 callback(uploadResp);
             };
             promise = privateSigned.uploadFromFile("file.json").then((actualToken) => {
+                expect(requestHandler.createUrl).toHaveBeenCalledWith(account.id, false);
+                expect(requestHandler.buildRequestOptions).toHaveBeenCalledWith(url, "POST");
                 expect(actualToken).toEqual(token);
                 expect(signer.sign).toHaveBeenCalled();
             });
