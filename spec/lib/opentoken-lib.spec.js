@@ -14,7 +14,6 @@ describe("opentokenLib", () => {
     beforeEach(() => {
         opentokenLib = require("../../lib/opentoken-lib")(host, "info");
         signed = opentokenLib.createSignedTokenRequests(account.id, account.code, account.secret);
-        req = opentokenLib.createTokenRequest(account.id);
     });
     describe(".createSignedTokenRequests", () => {
         describe(".public", () => {
@@ -36,6 +35,7 @@ describe("opentokenLib", () => {
     });
     describe(".createTokenRequest", () => {
         it(".public", () => {
+            req = opentokenLib.createTokenRequest(account.id);
             expect(req).toEqual(jasmine.any(Object));
             expect(req.accountId).toBe(account.id);
         });
