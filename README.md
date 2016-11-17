@@ -7,7 +7,7 @@ A library to interact with the [OpenToken API](https://github.com/opentoken-io/o
 Usage
 -----
 
-The library exposes two functions `createSignedTokenRequests` and `createTokenRequest`. Let's go through an example of a common use case for token requests.
+The library exposes two functions: `createSignedTokenRequests` and `createTokenRequest`. Let's go through an example of a common use case for token requests.
 
     // Instantiate the library.
     var lib = require("opentoken-lib")("api.opentoken.io");
@@ -33,10 +33,11 @@ The library exposes two functions `createSignedTokenRequests` and `createTokenRe
 SignedTokenRequest
 ------------------
 
-`createSignedTokenRequests` returns an object containing two properties `public` and `private`. Each of these properties are instances of `SignedTokenRequest`, meant to be used with public and private endpoints. It exposes four functions `download(token)`, `downloadToFile(token, filePath)`, `upload(content)`, and `uploadToFile(filePath)`.
+`createSignedTokenRequests` returns an object containing two properties: `public` and `private`. Each of these properties are instances of `SignedTokenRequest`, meant to be used with public and private endpoints. It exposes four functions: `download(token)`, `downloadToFile(token, filePath)`, `upload(content)`, and `uploadToFile(filePath)`.
 
 
 TokenRequest
 ------------
 
-Provides an interface for unsigned token requests. `createTokenRequest` returns an instance of `TokenRequest`. It exposes two functions `download(token)` and `downloadToFile(token, filePath)`.
+Provides an interface for unsigned token requests. `createTokenRequest` returns an instance of `TokenRequest`. It exposes two functions: `download(token)` and `downloadToFile(token, filePath)`.
+

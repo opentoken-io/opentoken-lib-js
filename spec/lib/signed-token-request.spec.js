@@ -16,26 +16,28 @@ describe("SignedTokenRequest", () => {
         container = require("../../lib/container")(host, "info");
         bluebird = container.resolve("bluebird");
         requestMock = require("../mock/request-mock")();
-        requestMock.get.andReturn(requestMock);
-        requestMock.post.andReturn(requestMock);
         container.register("request", requestMock);
         responseMock = require("../mock/response-mock")();
         container.register("logger", require("../mock/logger-mock")());
-        fsMock = jasmine.createSpyObj("fs", ["createWriteStream"]);
+        fsMock = jasmine.createSpyObj("fs", [
+            "createWriteStream"
+        ]);
         container.register("fs", fsMock);
         requestAsyncMock = jasmine.createSpy("requestAsync");
         container.register("requestAsync", requestAsyncMock);
         signer = container.resolve("signer");
-        spyOn(signer, "sign").andCallThrough();
         requestHandler = container.resolve("requestHandler");
-        spyOn(requestHandler, "createUrl").andCallThrough();
-        spyOn(requestHandler, "checkResponse").andCallThrough();
-        spyOn(requestHandler, "buildRequestOptions").andCallThrough();
         SignedTokenRequest = container.resolve("SignedTokenRequest");
         StreamReadable = container.resolve("StreamReadable");
         url = `https://${host}/account/${account.id}/token`;
         privateSigned = new SignedTokenRequest(account.id, false, account.code, account.secret);
         publicSigned = new SignedTokenRequest(account.id, true, account.code, account.secret);
+        spyOn(signer, "sign").andCallThrough();
+        spyOn(requestHandler, "createUrl").andCallThrough();
+        spyOn(requestHandler, "checkResponse").andCallThrough();
+        spyOn(requestHandler, "buildRequestOptions").andCallThrough();
+        requestMock.get.andReturn(requestMock);
+        requestMock.post.andReturn(requestMock);
     });
 
 
@@ -55,7 +57,7 @@ describe("SignedTokenRequest", () => {
 
 
     /**
-     * Assert Authrization header.
+     * Assert Authorization header.
      *
      * @param {string} authHeader
      */
@@ -224,7 +226,7 @@ describe("SignedTokenRequest", () => {
             });
 
             // Basically the same thing as above. Have to have this event fired after
-            // the signer has signed. I found no other way to do this then setTimeout.
+            // the signer has signed. I found no other way to do this than setTimeout.
             setTimeout(() => {
                 stream.emit("end");
             }, 250);
@@ -243,6 +245,7 @@ describe("SignedTokenRequest", () => {
                 expect(signer.sign).toHaveBeenCalled();
             });
 
+            // Same as above. Need to have a slight pause before emitting this.
             setTimeout(() => {
                 stream.emit("end");
             }, 250);

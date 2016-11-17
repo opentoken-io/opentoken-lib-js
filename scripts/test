@@ -17,6 +17,6 @@ else
 fi
 
 # Verify the coding standards are enforced.
-eslint lib/
+eslint spec/ lib/
 
 echo "All tests pass."

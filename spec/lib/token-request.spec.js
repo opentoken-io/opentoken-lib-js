@@ -10,7 +10,9 @@ describe("TokenRequest", () => {
     beforeEach(() => {
         container = require("../../lib/container")(host);
         bluebird = container.resolve("bluebird");
-        fsMock = jasmine.createSpyObj("fs", ["createWriteStream"]);
+        fsMock = jasmine.createSpyObj("fs", [
+            "createWriteStream"
+        ]);
         container.register("fs", fsMock);
         requestMock = require("../mock/request-mock")();
         requestMock.get.andReturn(requestMock);
