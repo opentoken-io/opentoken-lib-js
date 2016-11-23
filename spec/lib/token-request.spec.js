@@ -1,7 +1,7 @@
 "use strict";
 
 describe("TokenRequest", () => {
-    var bluebird, container, fsMock, requestAsyncMock, requestMock, responseMock, TokenRequest, tr;
+    var bluebird, container, fsMock, requestAsyncMock, requestMock, responseMock, StreamReadable, TokenRequest, tr, utils;
 
     const accountId = "accountId",
         host = "api.opentoken.io",
@@ -15,16 +15,16 @@ describe("TokenRequest", () => {
         ]);
         container.register("fs", fsMock);
         requestMock = require("../mock/request-mock")();
-        requestMock.get.andReturn(requestMock);
+        requestAsyncMock = jasmine.createSpy("request");
         responseMock = require("../mock/response-mock")();
-        container.register("request", requestMock);
-        requestAsyncMock = jasmine.createSpy("requestAsync");
         container.register("requestAsync", requestAsyncMock);
         container.register("logger", require("../mock/logger-mock")());
         TokenRequest = container.resolve("TokenRequest");
         tr = new TokenRequest(accountId);
+        StreamReadable = require("stream").Readable;
+        utils = require("../helper/utils")(StreamReadable);
     });
-    describe(".download", () => {
+    describe(".downloadAsync", () => {
         it("successfully downloads content.", () => {
             var resp;
 
@@ -34,23 +34,23 @@ describe("TokenRequest", () => {
             };
             requestAsyncMock.andReturn(bluebird.resolve(resp));
 
-            return tr.download(token).then((contents) => {
+            return tr.downloadAsync(token).then((contents) => {
                 expect(contents).toEqual(resp.body);
             });
         });
     });
-    describe(".downloadToFile", () => {
+    describe(".downloadToFileAsync", () => {
         it("successfully downloads content to a fake file.", () => {
-            var file, mockedStream, promise, StreamReadable;
+            var file, mockedStream, promise;
 
+            requestAsyncMock.get = jasmine.createSpy("request.get").andReturn(requestMock);
             file = "test.js";
-            StreamReadable = require("stream").Readable;
-            mockedStream = new StreamReadable();
+            mockedStream = utils.createStream();
             responseMock.pipe.andReturn(mockedStream);
             fsMock.createWriteStream.andReturn({
                 path: file
             });
-            promise = tr.downloadToFile(token, file).then((actualFile) => {
+            promise = tr.downloadToFileAsync(token, file).then((actualFile) => {
                 expect(actualFile).toEqual(file);
             });
 

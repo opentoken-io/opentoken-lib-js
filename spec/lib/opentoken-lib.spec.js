@@ -12,7 +12,7 @@ describe("opentokenLib", () => {
         host = "api.opentoken.io";
 
     beforeEach(() => {
-        opentokenLib = require("../../lib/opentoken-lib")(host, "info");
+        opentokenLib = require("../../lib/opentoken-lib")(host);
         signed = opentokenLib.createSignedTokenRequests(account.id, account.code, account.secret);
     });
     describe(".createSignedTokenRequests", () => {
@@ -34,10 +34,12 @@ describe("opentokenLib", () => {
         });
     });
     describe(".createTokenRequest", () => {
-        it(".public", () => {
-            req = opentokenLib.createTokenRequest(account.id);
-            expect(req).toEqual(jasmine.any(Object));
-            expect(req.accountId).toBe(account.id);
+        describe(".public", () => {
+            it("is a TokenRequest with the proper properties set.", () => {
+                req = opentokenLib.createTokenRequest(account.id);
+                expect(req).toEqual(jasmine.any(Object));
+                expect(req.accountId).toBe(account.id);
+            });
         });
     });
 });
