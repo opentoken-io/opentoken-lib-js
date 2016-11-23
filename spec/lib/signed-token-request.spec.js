@@ -1,7 +1,7 @@
 "use strict";
 
 describe("SignedTokenRequest", () => {
-    var bluebird, container, fsMock, privateSigned, publicSigned, requestAsyncMock, requestHandler, requestMock, responseMock, SignedTokenRequest, signer, StreamReadable, url, utils;
+    var bluebird, container, fsMock, privateSigned, publicSigned, requestAsyncMock, requestHandler, requestMock, responseMock, SignedTokenRequest, signer, url;
 
     // Just some test data that is constant.
     const account = {
@@ -30,7 +30,6 @@ describe("SignedTokenRequest", () => {
         signer = container.resolve("signer");
         requestHandler = container.resolve("requestHandler");
         SignedTokenRequest = container.resolve("SignedTokenRequest");
-        StreamReadable = container.resolve("StreamReadable");
         url = `https://${host}/account/${account.id}/token`;
         privateSigned = new SignedTokenRequest(account.id, false, account.code, account.secret);
         publicSigned = new SignedTokenRequest(account.id, true, account.code, account.secret);
@@ -39,7 +38,6 @@ describe("SignedTokenRequest", () => {
         spyOn(requestHandler, "buildRequestOptions").andCallThrough();
         requestAsyncMock.get = jasmine.createSpy("request.get").andReturn(requestMock);
         requestAsyncMock.post = jasmine.createSpy("request.post").andReturn(requestMock);
-        utils = require("../helper/utils")(StreamReadable);
         spyOn(signer, "sign").andCallThrough();
     });
 
@@ -82,7 +80,7 @@ describe("SignedTokenRequest", () => {
                 assertAuthHeader(actualRequestOpts.headers.Authorization);
             });
         });
-        it("fails to download due to errorn no response body", () => {
+        it("fails to download due to error no response body", () => {
             var resp;
 
             resp = {
@@ -147,7 +145,7 @@ describe("SignedTokenRequest", () => {
             var file, promise, stream;
 
             file = "fakeFile";
-            stream = utils.createStream("test");
+            stream = jasmine.createStream("test");
             responseMock.pipe.andReturn(stream);
             fsMock.createWriteStream.andReturn({
                 path: file
@@ -168,7 +166,7 @@ describe("SignedTokenRequest", () => {
             var file, promise, stream;
 
             file = "fakeFile";
-            stream = utils.createStream("test");
+            stream = jasmine.createStream("test");
             responseMock.pipe.andReturn(stream);
             fsMock.createWriteStream.andReturn({
                 path: file

@@ -1,7 +1,7 @@
 "use strict";
 
 describe("TokenRequest", () => {
-    var bluebird, container, fsMock, requestAsyncMock, requestMock, responseMock, StreamReadable, TokenRequest, tr, utils;
+    var bluebird, container, fsMock, requestAsyncMock, requestMock, responseMock, TokenRequest, tr;
 
     const accountId = "accountId",
         host = "api.opentoken.io",
@@ -21,8 +21,6 @@ describe("TokenRequest", () => {
         container.register("logger", require("../mock/logger-mock")());
         TokenRequest = container.resolve("TokenRequest");
         tr = new TokenRequest(accountId);
-        StreamReadable = require("stream").Readable;
-        utils = require("../helper/utils")(StreamReadable);
     });
     describe(".downloadAsync", () => {
         it("successfully downloads content.", () => {
@@ -45,7 +43,7 @@ describe("TokenRequest", () => {
 
             requestAsyncMock.get = jasmine.createSpy("request.get").andReturn(requestMock);
             file = "test.js";
-            mockedStream = utils.createStream();
+            mockedStream = jasmine.createStream();
             responseMock.pipe.andReturn(mockedStream);
             fsMock.createWriteStream.andReturn({
                 path: file
