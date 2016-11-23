@@ -42,7 +42,7 @@ Creates an instance of `OpentokenLib`.
     var lib = require("opentoken-lib")("api.opentoken.io");
 
 
-### `{opentoken-lib-js~SignedTokenRequests} opentokenLib.createSignedTokenRequests({string} accountId, {string} codeString, {string} secret)`
+### `{SignedTokenRequests} opentokenLib.createSignedTokenRequests({string} accountId, {string} codeString, {string} secret)`
 
 Creates an instance of `SignedTokenRequests`.
 
