@@ -3,6 +3,11 @@ OpenToken Library
 
 A library to interact with the [OpenToken API](https://github.com/opentoken-io/opentoken).
 
+Installation
+------------
+
+    npm install opentoken-lib
+
 
 Examples
 --------
