@@ -1,6 +1,6 @@
 {
     "name": "opentoken-lib",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Used to interact with the OpenToken API.",
     "main": "lib/opentoken-lib.js",
     "scripts": {
