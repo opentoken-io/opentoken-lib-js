@@ -8,7 +8,7 @@ describe("AuthoriztionBuilder", () => {
         dateMock = jasmine.createSpyObj("date", [
             "now"
         ]);
-        dateMock.now.andReturn("NOW");
+        dateMock.now.and.returnValue("NOW");
         container = require("../../lib/container")("api.opentoken.io");
         container.register("dateService", dateMock);
         container.register("logger", loggerMock);

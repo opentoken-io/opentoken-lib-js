@@ -33,12 +33,12 @@ describe("SignedTokenRequest", () => {
         url = `https://${host}/account/${account.id}/token`;
         privateSigned = new SignedTokenRequest(account.id, false, account.code, account.secret);
         publicSigned = new SignedTokenRequest(account.id, true, account.code, account.secret);
-        spyOn(requestHandler, "createUrl").andCallThrough();
-        spyOn(requestHandler, "checkResponse").andCallThrough();
-        spyOn(requestHandler, "buildRequestOptions").andCallThrough();
-        requestAsyncMock.get = jasmine.createSpy("request.get").andReturn(requestMock);
-        requestAsyncMock.post = jasmine.createSpy("request.post").andReturn(requestMock);
-        spyOn(signer, "sign").andCallThrough();
+        spyOn(requestHandler, "createUrl").and.callThrough();
+        spyOn(requestHandler, "checkResponse").and.callThrough();
+        spyOn(requestHandler, "buildRequestOptions").and.callThrough();
+        requestAsyncMock.get = jasmine.createSpy("request.get").and.returnValue(requestMock);
+        requestAsyncMock.post = jasmine.createSpy("request.post").and.returnValue(requestMock);
+        spyOn(signer, "sign").and.callThrough();
     });
 
 
@@ -66,7 +66,7 @@ describe("SignedTokenRequest", () => {
                 statusCode: 200
             };
             url = `${url}/${token}`;
-            requestAsyncMock.andReturn(bluebird.resolve(resp));
+            requestAsyncMock.and.returnValue(bluebird.resolve(resp));
 
             return privateSigned.downloadAsync(token).then((body) => {
                 expect(requestHandler.createUrl).toHaveBeenCalledWith(account.id, false, token);
@@ -74,7 +74,7 @@ describe("SignedTokenRequest", () => {
                 expect(body).toEqual(resp.body);
                 expect(requestAsyncMock).toHaveBeenCalled();
                 expect(signer.sign).toHaveBeenCalled();
-                actualRequestOpts = requestAsyncMock.argsForCall[0][0];
+                actualRequestOpts = requestAsyncMock.calls.argsFor(0)[0];
                 expect(actualRequestOpts.method).toEqual("GET");
                 expect(actualRequestOpts.url).toEqual(url);
                 assertAuthHeader(actualRequestOpts.headers.Authorization);
@@ -86,7 +86,7 @@ describe("SignedTokenRequest", () => {
             resp = {
                 statusCode: 401
             };
-            requestAsyncMock.andReturn(bluebird.resolve(resp));
+            requestAsyncMock.and.returnValue(bluebird.resolve(resp));
 
             return privateSigned.downloadAsync(token).then(jasmine.fail, (err) => {
                 expect(err.message).toEqual(`Error occurred: HTTP status code: ${resp.statusCode}`);
@@ -105,7 +105,7 @@ describe("SignedTokenRequest", () => {
                 body: JSON.stringify(body),
                 statusCode: 401
             };
-            requestAsyncMock.andReturn(bluebird.resolve(resp));
+            requestAsyncMock.and.returnValue(bluebird.resolve(resp));
 
             return privateSigned.downloadAsync(token).then(jasmine.fail, (err) => {
                 expect(err.message).toEqual(`Error occurred: HTTP status code: ${resp.statusCode}, message: Failed to verify signature`);
@@ -126,14 +126,14 @@ describe("SignedTokenRequest", () => {
                     location: `${url}/${token}?public=true`
                 }
             };
-            requestAsyncMock.andReturn(bluebird.resolve(resp));
+            requestAsyncMock.and.returnValue(bluebird.resolve(resp));
 
             return publicSigned.uploadAsync(contents).then((actualToken) => {
                 expect(requestHandler.createUrl).toHaveBeenCalledWith(account.id, true);
                 expect(requestHandler.buildRequestOptions).toHaveBeenCalledWith(`${url}?public=true`, "POST");
                 expect(actualToken).toEqual(token);
                 expect(signer.sign).toHaveBeenCalled();
-                actualRequestOpts = requestAsyncMock.argsForCall[0][0];
+                actualRequestOpts = requestAsyncMock.calls.argsFor(0)[0];
                 expect(actualRequestOpts.method).toEqual("POST");
                 expect(actualRequestOpts.url).toEqual(`${url}?public=true`);
                 assertAuthHeader(actualRequestOpts.headers.Authorization);
@@ -146,8 +146,8 @@ describe("SignedTokenRequest", () => {
 
             file = "fakeFile";
             stream = jasmine.createStream("test");
-            responseMock.pipe.andReturn(stream);
-            fsMock.createWriteStream.andReturn({
+            responseMock.pipe.and.returnValue(stream);
+            fsMock.createWriteStream.and.returnValue({
                 path: file
             });
             url = `${url}/${token}`;
@@ -167,8 +167,8 @@ describe("SignedTokenRequest", () => {
 
             file = "fakeFile";
             stream = jasmine.createStream("test");
-            responseMock.pipe.andReturn(stream);
-            fsMock.createWriteStream.andReturn({
+            responseMock.pipe.and.returnValue(stream);
+            fsMock.createWriteStream.and.returnValue({
                 path: file
             });
             url = `${url}/${token}`;
@@ -197,7 +197,7 @@ describe("SignedTokenRequest", () => {
             requestMock.on = (event, callback) => {
                 return callback(resp);
             };
-            fsMock.readFileAsync.andReturn(bluebird.resolve("test"));
+            fsMock.readFileAsync.and.returnValue(bluebird.resolve("test"));
             promise = privateSigned.uploadFromFileAsync("file.json").then((actualToken) => {
                 expect(requestHandler.createUrl).toHaveBeenCalledWith(account.id, false);
                 expect(requestHandler.buildRequestOptions).toHaveBeenCalledWith(url, "POST");

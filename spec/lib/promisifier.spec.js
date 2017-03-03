@@ -5,8 +5,8 @@ describe("promisifier", () => {
 
     beforeEach(() => {
         promise = require("bluebird");
-        spyOn(promise, "promisify").andCallThrough();
-        spyOn(promise, "promisifyAll").andCallThrough();
+        spyOn(promise, "promisify").and.callThrough();
+        spyOn(promise, "promisifyAll").and.callThrough();
         promisifier = require("../../lib/promisifier")(promise);
     });
     it("is a function", () => {
@@ -21,7 +21,7 @@ describe("promisifier", () => {
         result = {
             description: "result from promise.promisifyAll()"
         };
-        promise.promisifyAll.andReturn(result);
+        promise.promisifyAll.and.returnValue(result);
         expect(promisifier(obj)).toBe(result);
         expect(promise.promisifyAll).toHaveBeenCalledWith(obj);
     });
@@ -30,8 +30,8 @@ describe("promisifier", () => {
 
         fn = () => {};
         result = () => {};
-        promise.promisify.andReturn(result);
-        promise.promisifyAll.andCallFake((x) => {
+        promise.promisify.and.returnValue(result);
+        promise.promisifyAll.and.callFake((x) => {
             return x;
         });
         expect(promisifier(fn)).toBe(result);
