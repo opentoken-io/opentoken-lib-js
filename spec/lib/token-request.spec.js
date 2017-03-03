@@ -30,7 +30,7 @@ describe("TokenRequest", () => {
                 body: "test",
                 statusCode: 200
             };
-            requestAsyncMock.andReturn(bluebird.resolve(resp));
+            requestAsyncMock.and.returnValue(bluebird.resolve(resp));
 
             return tr.downloadAsync(token).then((contents) => {
                 expect(contents).toEqual(resp.body);
@@ -41,11 +41,11 @@ describe("TokenRequest", () => {
         it("successfully downloads content to a fake file.", () => {
             var file, mockedStream, promise;
 
-            requestAsyncMock.get = jasmine.createSpy("request.get").andReturn(requestMock);
+            requestAsyncMock.get = jasmine.createSpy("request.get").and.returnValue(requestMock);
             file = "test.js";
             mockedStream = jasmine.createStream();
-            responseMock.pipe.andReturn(mockedStream);
-            fsMock.createWriteStream.andReturn({
+            responseMock.pipe.and.returnValue(mockedStream);
+            fsMock.createWriteStream.and.returnValue({
                 path: file
             });
             promise = tr.downloadToFileAsync(token, file).then((actualFile) => {
